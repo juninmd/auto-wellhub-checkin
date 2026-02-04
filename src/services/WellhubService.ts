@@ -114,7 +114,7 @@ export class WellhubService {
         };
       }
 
-      console.log(`✅ Realizando check-in na atividade ${targetActivityId}...`);
+      console.log(`⏳ Realizando check-in na atividade ${targetActivityId}...`);
       
       const response = await this.client.post('/check-in', {
         activityId: targetActivityId,
@@ -213,7 +213,7 @@ export class WellhubService {
   /**
    * Extrai mensagem de erro
    */
-  private getErrorMessage(error: any): string {
+  private getErrorMessage(error: unknown): string {
     if (axios.isAxiosError(error)) {
       if (error.response) {
         return error.response.data?.message || error.response.statusText || 'Erro desconhecido';

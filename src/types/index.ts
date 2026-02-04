@@ -8,7 +8,7 @@ export interface WellhubConfig {
 export interface CheckInResponse {
   success: boolean;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface Activity {
