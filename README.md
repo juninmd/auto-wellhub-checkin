@@ -67,6 +67,8 @@ npm start
 
 ## ⚙️ Configuração
 
+### Variáveis de Ambiente
+
 O arquivo `.env` aceita as seguintes variáveis:
 
 | Variável | Obrigatória | Descrição |
@@ -75,6 +77,20 @@ O arquivo `.env` aceita as seguintes variáveis:
 | `WELLHUB_PASSWORD` | ✅ Sim | Sua senha de acesso ao Wellhub |
 | `GYM_ID` | ❌ Não | ID da academia (se conhecido) |
 | `ACTIVITY_ID` | ❌ Não | ID da atividade (se conhecido) |
+
+### Automação com GitHub Actions
+
+Este projeto inclui um workflow do GitHub Actions para execução automática diária:
+
+1. Vá em `Settings` > `Secrets and variables` > `Actions` no seu repositório
+2. Adicione os seguintes secrets:
+   - `WELLHUB_EMAIL`: Seu email do Wellhub
+   - `WELLHUB_PASSWORD`: Sua senha do Wellhub
+   - `GYM_ID` (opcional): ID da academia
+   - `ACTIVITY_ID` (opcional): ID da atividade
+
+3. O workflow executará automaticamente todo dia às 6:00 AM UTC
+4. Você também pode executar manualmente em `Actions` > `Auto Check-in` > `Run workflow`
 
 ### Comportamento Automático
 
