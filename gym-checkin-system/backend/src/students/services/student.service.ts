@@ -8,3 +8,4 @@ export interface StudentService {
   getStudentStatus(userId: string): Promise<StudentStatus>;
   isCheckinAllowedAtCurrentTime(userId: string, planId: string): Promise<boolean>;
 }
+// Student Service

@@ -54,3 +54,4 @@ export interface BiometricsGrpcService {
    */
   validateBiometrics(data: BiometricMatchRequest): Promise<BiometricMatchResponse>;
 }
+// Biometrics Contract
