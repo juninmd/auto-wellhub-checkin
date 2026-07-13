@@ -12,3 +12,4 @@ export abstract class AbstractLoggerService implements LoggerService {
   abstract warn(message: string, context?: string): void;
   abstract debug(message: string, context?: string): void;
 }
+// Logger Contract
