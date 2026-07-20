@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package biometrics;
+
+service BiometricService {
+  rpc Identify (IdentifyRequest) returns (IdentifyResponse);
+  rpc Enroll (EnrollRequest) returns (EnrollResponse);
+}
+
+message IdentifyRequest {
+  string biometric_base64 = 1;
+}
+
+message IdentifyResponse {
+  string student_id = 1;
+  float confidence_score = 2;
+  bool success = 3;
+  string error_message = 4;
+}
+
+message EnrollRequest {
+  string student_id = 1;
+  string biometric_base64 = 2;
+}
+
+message EnrollResponse {
+  bool success = 1;
+  string error_message = 2;
+}
