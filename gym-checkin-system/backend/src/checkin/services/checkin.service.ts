@@ -1,86 +1,77 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { BiometricsGrpcService, BiometricMatchRequest } from '../../infrastructure/grpc/biometrics.contract';
-import { StudentService } from '../../students/services/student.service';
-import { HardwareService } from '../../hardware/services/hardware.service';
-import { AbstractLoggerService } from '../../infrastructure/logger/logger.contract';
+import { Inject, Injectable, Logger, OnModuleInit, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
+import { BiometricsService, IdentifyRequest } from '../../infrastructure/grpc/biometrics.interface';
+import { StudentsService } from '../../students/services/students.service';
+import { IHardwareProvider, HARDWARE_PROVIDER } from '../../infrastructure/hardware/hardware.provider.interface';
+import { ICheckinRepository } from '../interfaces/checkin-repository.interface';
 
-export interface CheckinResult {
-  success: boolean;
-  message: string;
-}
-
-export const BIOMETRICS_SERVICE_TOKEN = 'BiometricsGrpcServiceToken';
-export const STUDENT_SERVICE_TOKEN = 'StudentServiceToken';
-export const HARDWARE_SERVICE_TOKEN = 'HardwareServiceToken';
-export const LOGGER_SERVICE_TOKEN = 'LoggerServiceToken';
-
-/**
- * Service responsible for orchestrating the check-in process.
- * Follows Single Responsibility Principle (SRP) and Dependency Inversion Principle (DIP).
- */
 @Injectable()
-export class CheckinService {
+export class CheckinService implements OnModuleInit {
+  private readonly logger = new Logger(CheckinService.name);
+  private biometricsService: BiometricsService;
+
   constructor(
-    @Inject(BIOMETRICS_SERVICE_TOKEN)
-    private readonly biometricsService: BiometricsGrpcService,
-
-    @Inject(STUDENT_SERVICE_TOKEN)
-    private readonly studentService: StudentService,
-
-    @Inject(HARDWARE_SERVICE_TOKEN)
-    private readonly hardwareService: HardwareService,
-
-    @Inject(LOGGER_SERVICE_TOKEN)
-    private readonly logger: AbstractLoggerService,
+    @Inject('BIOMETRICS_PACKAGE') private readonly client: ClientGrpc,
+    private readonly studentsService: StudentsService,
+    @Inject(HARDWARE_PROVIDER) private readonly hardwareProvider: IHardwareProvider,
+    @Inject(ICheckinRepository) private readonly checkinRepository: ICheckinRepository,
   ) {}
 
+  onModuleInit() {
+    this.biometricsService = this.client.getService<BiometricsService>('BiometricService');
+  }
+
   /**
-   * Processes a check-in attempt using biometric data.
-   *
-   * @param request The biometric data payload from the totem.
-   * @returns A result indicating success or failure with a descriptive message.
+   * Processes a check-in request using biometric data.
+   * @param biometricBase64 The base64 encoded biometric image or data.
+   * @returns An object indicating success and a message.
+   * @throws UnauthorizedException if identification or validation fails.
    */
-  async processBiometricCheckin(request: BiometricMatchRequest): Promise<CheckinResult> {
+  async processCheckin(biometricBase64: string): Promise<{ success: boolean; message: string; studentId?: string }> {
     try {
-      // 1. Validate Biometrics (via Python Microservice)
-      const matchResult = await this.biometricsService.validateBiometrics(request);
+      this.logger.log('Starting biometric identification...');
 
-      if (!matchResult.success || !matchResult.userId) {
-        return { success: false, message: 'Usuário não reconhecido. Tente novamente.' };
+      const identifyRequest: IdentifyRequest = { biometric_base64: biometricBase64 };
+      // Convert RxJS Observable to Promise
+      const identifyResponse = await lastValueFrom(this.biometricsService.identify(identifyRequest));
+
+      if (!identifyResponse.success || !identifyResponse.student_id) {
+        this.logger.warn(`Biometric identification failed: ${identifyResponse.error_message}`);
+        throw new UnauthorizedException(identifyResponse.error_message || 'Biometric identification failed.');
       }
 
-      const userId = matchResult.userId;
+      const studentId = identifyResponse.student_id;
+      this.logger.log(`Student identified: ${studentId}. Validating plan...`);
 
-      // 2. Verify Student Plan and Status
-      const studentStatus = await this.studentService.getStudentStatus(userId);
-
-      if (!studentStatus.isActive) {
-        return { success: false, message: 'Plano inativo. Procure a recepção.' };
+      const isPlanValid = await this.studentsService.validateStudentPlan(studentId);
+      if (!isPlanValid) {
+        this.logger.warn(`Plan validation failed for student ${studentId}.`);
+        throw new UnauthorizedException('Student does not have an active plan or is not allowed at this time.');
       }
 
-      // 3. Verify Schedule / Time allowance
-      const isAllowedNow = await this.studentService.isCheckinAllowedAtCurrentTime(userId, studentStatus.planId);
+      this.logger.log(`Plan is valid. Opening turnstile for student ${studentId}...`);
+      const turnstileOpened = await this.hardwareProvider.openTurnstile(studentId);
 
-      if (!isAllowedNow) {
-        return { success: false, message: 'Check-in não permitido neste horário.' };
+      if (!turnstileOpened) {
+        this.logger.error(`Failed to open turnstile for student ${studentId}.`);
+        throw new InternalServerErrorException('Failed to communicate with the hardware.');
       }
 
-      // 4. Trigger Hardware (Open Turnstile)
-      const hardwareSuccess = await this.hardwareService.triggerTurnstile();
+      await this.checkinRepository.logCheckin({
+        studentId,
+        timestamp: new Date(),
+        status: 'SUCCESS',
+      });
 
-      if (!hardwareSuccess) {
-        // Log hardware failure (logging abstraction could be injected here)
-        return { success: false, message: 'Erro ao liberar catraca. Tente novamente ou procure a recepção.' };
+      this.logger.log(`Check-in successful for student ${studentId}.`);
+      return { success: true, message: 'Check-in successful', studentId };
+    } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof InternalServerErrorException) {
+        throw error;
       }
-
-      // TODO: Log check-in event to Database/Redis asynchronously
-
-      return { success: true, message: 'Acesso Liberado!' };
-
-    } catch (error: any) {
-      // Centralized error handling within the domain service.
-      this.logger.error(`Check-in error: ${error.message}`, error.stack, 'CheckinService');
-      return { success: false, message: 'Erro interno no servidor durante o check-in.' };
+      this.logger.error(`Unexpected error during check-in process: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('An unexpected error occurred during the check-in process.');
     }
   }
 }

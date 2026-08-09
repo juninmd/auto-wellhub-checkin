@@ -1,19 +1,25 @@
 import { Module } from '@nestjs/common';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 import { StudentsController } from './controllers/students.controller';
+import { StudentsService } from './services/students.service';
 
-// Provisório: implementando uma versão básica do serviço que injetaremos globalmente depois
-// Mas o module precisa existir
 @Module({
-  controllers: [StudentsController],
-  providers: [
-    {
-      provide: 'StudentService',
-      useValue: {
-        getStudentStatus: async () => ({ isActive: true, planId: 'plan-1' }),
-        isCheckinAllowedAtCurrentTime: async () => true,
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'BIOMETRICS_PACKAGE',
+        transport: Transport.GRPC,
+        options: {
+          package: 'biometrics',
+          protoPath: join(__dirname, '../../proto/biometrics.proto'),
+          url: 'localhost:50051',
+        },
       },
-    },
+    ]),
   ],
-  exports: ['StudentService'],
+  controllers: [StudentsController],
+  providers: [StudentsService],
+  exports: [StudentsService],
 })
 export class StudentsModule {}
