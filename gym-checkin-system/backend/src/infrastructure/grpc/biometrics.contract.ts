@@ -12,7 +12,7 @@ export interface BiometricMatchRequest {
   /**
    * Type of biometrics being sent (e.g., 'FACE', 'FINGERPRINT').
    */
-  type: 'FACE' | 'FINGERPRINT';
+  type: "FACE" | "FINGERPRINT";
 }
 
 /**
@@ -52,6 +52,8 @@ export interface BiometricsGrpcService {
    * @param data The biometric match request containing the captured data.
    * @returns A promise resolving to the match response (success, userId, etc.).
    */
-  validateBiometrics(data: BiometricMatchRequest): Promise<BiometricMatchResponse>;
+  validateBiometrics(
+    data: BiometricMatchRequest,
+  ): Promise<BiometricMatchResponse>;
 }
 // Biometrics Contract

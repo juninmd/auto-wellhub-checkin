@@ -6,4 +6,4 @@ export interface IHardwareService {
   openTurnstile(): Promise<boolean>;
 }
 
-export const IHardwareService = Symbol('IHardwareService');
+export const IHardwareService = Symbol("IHardwareService");

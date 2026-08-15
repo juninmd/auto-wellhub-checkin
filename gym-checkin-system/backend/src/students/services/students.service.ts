@@ -1,8 +1,17 @@
-import { Injectable, Inject, OnModuleInit, InternalServerErrorException, Logger } from '@nestjs/common';
-import { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
-import { BiometricsService, EnrollRequest } from '../../infrastructure/grpc/biometrics.interface';
-import { RegisterStudentDto } from '../dto/students.dto';
+import {
+  Injectable,
+  Inject,
+  OnModuleInit,
+  InternalServerErrorException,
+  Logger,
+} from "@nestjs/common";
+import { ClientGrpc } from "@nestjs/microservices";
+import { lastValueFrom } from "rxjs";
+import {
+  BiometricsService,
+  EnrollRequest,
+} from "../../infrastructure/grpc/biometrics.interface";
+import { RegisterStudentDto } from "../dto/students.dto";
 
 @Injectable()
 export class StudentsService implements OnModuleInit {
@@ -10,11 +19,12 @@ export class StudentsService implements OnModuleInit {
   private biometricsService: BiometricsService;
 
   constructor(
-    @Inject('BIOMETRICS_PACKAGE') private readonly client: ClientGrpc,
+    @Inject("BIOMETRICS_PACKAGE") private readonly client: ClientGrpc,
   ) {}
 
   onModuleInit() {
-    this.biometricsService = this.client.getService<BiometricsService>('BiometricService');
+    this.biometricsService =
+      this.client.getService<BiometricsService>("BiometricService");
   }
 
   /**
@@ -22,7 +32,9 @@ export class StudentsService implements OnModuleInit {
    * @param studentId The ID of the student to validate.
    * @returns true if the student has an active plan and can check-in, false otherwise.
    */
-  async registerStudent(dto: RegisterStudentDto): Promise<{ success: boolean; message: string }> {
+  async registerStudent(
+    dto: RegisterStudentDto,
+  ): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Registering student ${dto.studentId}...`);
 
     // In a real implementation, we would save the student data to PostgreSQL here.
@@ -35,18 +47,27 @@ export class StudentsService implements OnModuleInit {
           biometric_base64: dto.biometric_base64,
         };
 
-        const enrollResponse = await lastValueFrom(this.biometricsService.enroll(enrollRequest));
+        const enrollResponse = await lastValueFrom(
+          this.biometricsService.enroll(enrollRequest),
+        );
 
         if (!enrollResponse.success) {
-          throw new InternalServerErrorException(`Biometric enrollment failed: ${enrollResponse.error_message}`);
+          throw new InternalServerErrorException(
+            `Biometric enrollment failed: ${enrollResponse.error_message}`,
+          );
         }
       } catch (error) {
-        this.logger.error(`Error enrolling biometrics: ${error.message}`, error.stack);
-        throw new InternalServerErrorException('Failed to process biometric enrollment.');
+        this.logger.error(
+          `Error enrolling biometrics: ${error.message}`,
+          error.stack,
+        );
+        throw new InternalServerErrorException(
+          "Failed to process biometric enrollment.",
+        );
       }
     }
 
-    return { success: true, message: 'Student registered successfully' };
+    return { success: true, message: "Student registered successfully" };
   }
 
   async validateStudentPlan(studentId: string): Promise<boolean> {
@@ -55,7 +76,7 @@ export class StudentsService implements OnModuleInit {
     }
 
     // Simulate database check for active plan and allowed time
-    const activePlansMock = ['student-123', 'student-456', 'simulated-user'];
+    const activePlansMock = ["student-123", "student-456", "simulated-user"];
     const hasActivePlan = activePlansMock.includes(studentId);
 
     const currentHour = new Date().getHours();

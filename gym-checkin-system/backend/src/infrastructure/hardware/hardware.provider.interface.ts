@@ -1,4 +1,4 @@
-export const HARDWARE_PROVIDER = 'HARDWARE_PROVIDER';
+export const HARDWARE_PROVIDER = "HARDWARE_PROVIDER";
 
 export interface IHardwareProvider {
   /**
