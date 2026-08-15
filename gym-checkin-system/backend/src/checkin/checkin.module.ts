@@ -1,25 +1,25 @@
-import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { join } from 'path';
-import { CheckinController } from './controllers/checkin.controller';
-import { CheckinService } from './services/checkin.service';
-import { ICheckinRepository } from './interfaces/checkin-repository.interface';
-import { IHardwareService } from '../infrastructure/hardware/hardware.interface';
-import { HARDWARE_PROVIDER } from '../infrastructure/hardware/hardware.provider.interface';
-import { AbstractLoggerService } from '../infrastructure/logger/logger.contract';
-import { StudentsModule } from '../students/students.module';
+import { Module } from "@nestjs/common";
+import { ClientsModule, Transport } from "@nestjs/microservices";
+import { join } from "path";
+import { CheckinController } from "./controllers/checkin.controller";
+import { CheckinService } from "./services/checkin.service";
+import { ICheckinRepository } from "./interfaces/checkin-repository.interface";
+import { IHardwareService } from "../infrastructure/hardware/hardware.interface";
+import { HARDWARE_PROVIDER } from "../infrastructure/hardware/hardware.provider.interface";
+import { AbstractLoggerService } from "../infrastructure/logger/logger.contract";
+import { StudentsModule } from "../students/students.module";
 
 @Module({
   imports: [
     StudentsModule,
     ClientsModule.register([
       {
-        name: 'BIOMETRICS_PACKAGE',
+        name: "BIOMETRICS_PACKAGE",
         transport: Transport.GRPC,
         options: {
-          package: 'biometrics',
-          protoPath: join(__dirname, '../../proto/biometrics.proto'),
-          url: 'localhost:50051',
+          package: "biometrics",
+          protoPath: join(__dirname, "../../proto/biometrics.proto"),
+          url: "localhost:50051",
         },
       },
     ]),
@@ -28,9 +28,12 @@ import { StudentsModule } from '../students/students.module';
   providers: [
     CheckinService,
     {
-      provide: 'BiometricsGrpcService',
+      provide: "BiometricsGrpcService",
       useValue: {
-        validateBiometrics: async () => ({ success: true, userId: 'simulated-user' }),
+        validateBiometrics: async () => ({
+          success: true,
+          userId: "simulated-user",
+        }),
       },
     },
     {
@@ -48,11 +51,11 @@ import { StudentsModule } from '../students/students.module';
     {
       provide: ICheckinRepository,
       useValue: {
-        logCheckin: async (log: any) => ({ id: 'log-1', ...log }),
+        logCheckin: async (log: any) => ({ id: "log-1", ...log }),
       },
     },
     {
-      provide: 'LoggerService',
+      provide: "LoggerService",
       useValue: {
         log: () => {},
         error: () => {},

@@ -23,5 +23,5 @@ export class CreateStudentDto {
   /**
    * Tipo da biometria
    */
-  biometricType: 'FACE' | 'FINGERPRINT';
+  biometricType: "FACE" | "FINGERPRINT";
 }

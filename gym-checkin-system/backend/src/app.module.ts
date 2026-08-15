@@ -1,16 +1,13 @@
-import { Module } from '@nestjs/common';
-import { CheckinModule } from './checkin/checkin.module';
-import { StudentsModule } from './students/students.module';
+import { Module } from "@nestjs/common";
+import { CheckinModule } from "./checkin/checkin.module";
+import { StudentsModule } from "./students/students.module";
 
 @Module({
-  imports: [
-    CheckinModule,
-    StudentsModule,
-  ],
+  imports: [CheckinModule, StudentsModule],
   controllers: [],
   providers: [
     {
-      provide: 'LoggerService',
+      provide: "LoggerService",
       useValue: {
         log: () => {},
         error: () => {},
