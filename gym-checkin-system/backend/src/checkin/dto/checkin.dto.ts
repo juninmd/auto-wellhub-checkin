@@ -1,7 +1,12 @@
-import { IsString, IsNotEmpty } from "class-validator";
+import { IsString, IsNotEmpty, IsIn } from "class-validator";
 
-export class CheckinDto {
+export class CheckinRequestDto {
   @IsString()
   @IsNotEmpty()
-  biometric_base64: string;
+  biometricData: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['FACE', 'FINGERPRINT'])
+  type: 'FACE' | 'FINGERPRINT';
 }

@@ -1,4 +1,9 @@
-// hardware/services/hardware.service.ts
-export interface HardwareService {
-  triggerTurnstile(gateId?: string): Promise<boolean>;
+import { Injectable } from '@nestjs/common';
+import { IHardwareService } from '../../infrastructure/hardware/hardware.interface';
+
+@Injectable()
+export class HardwareService implements IHardwareService {
+  async openTurnstile(): Promise<boolean> {
+    return true;
+  }
 }

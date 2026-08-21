@@ -1,14 +1,23 @@
-// students/services/student.service.ts
+import { Injectable } from "@nestjs/common";
+
 export interface StudentStatus {
   isActive: boolean;
   planId: string;
 }
 
-export interface StudentService {
-  getStudentStatus(userId: string): Promise<StudentStatus>;
-  isCheckinAllowedAtCurrentTime(
+@Injectable()
+export class StudentService {
+  async getStudentStatus(userId: string): Promise<StudentStatus> {
+    return {
+      isActive: true,
+      planId: "plan-1",
+    };
+  }
+
+  async isCheckinAllowedAtCurrentTime(
     userId: string,
     planId: string,
-  ): Promise<boolean>;
+  ): Promise<boolean> {
+    return true;
+  }
 }
-// Student Service

@@ -33,19 +33,19 @@ A arquitetura do sistema segue um modelo de microsserviços, integrando hardware
 ```mermaid
 sequenceDiagram
     participant Totem as Totem (Flutter)
-    participant NestJS as Backend (NestJS)
-    participant Python as Biometria (Python gRPC)
-    participant DB as PostgreSQL / Redis
+    participant NestJS as Backend Principal (NestJS)
+    participant DB as Postgres & Redis
+    participant Python as Serviço de Biometria (Python/gRPC)
     participant Catraca as Hardware (Catraca)
 
-    Totem->>NestJS: POST /checkin (Dados Biométricos)
-    NestJS->>Python: gRPC: Identify(BiometricData)
-    Python-->>NestJS: student_id, confidence_score
-    NestJS->>DB: Query Student & Plan Status (student_id)
-    DB-->>NestJS: Plan Active, Time Allowed
-    NestJS->>DB: Redis Check (Anti-passback)
-    NestJS->>Catraca: Command: OPEN
-    Catraca-->>NestJS: Success
-    NestJS->>DB: Postgres: Log Access Event
+    Totem->>NestJS: POST /checkin (Base64 da imagem ou Hash)
+    NestJS->>Python: gRPC: validateBiometrics(BiometricData)
+    Python-->>NestJS: userId (Match) ou Erro
+    NestJS->>DB: Query: Aluno Ativo? Horário Permitido?
+    DB-->>NestJS: Status Válido
+    NestJS->>DB: Redis: Verifica Anti-passback / Rate Limiting
+    NestJS->>Catraca: Dispara pulso de abertura
+    Catraca-->>NestJS: Sucesso
+    NestJS->>DB: Postgres: Log de acesso (Histórico)
     NestJS-->>Totem: 200 OK (Acesso Liberado)
 ```
