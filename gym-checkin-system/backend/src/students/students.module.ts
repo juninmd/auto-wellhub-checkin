@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { join } from "path";
 import { StudentsController } from "./controllers/students.controller";
-import { StudentsService } from "./services/students.service";
+import { StudentService } from "./services/student.service";
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { StudentsService } from "./services/students.service";
     ]),
   ],
   controllers: [StudentsController],
-  providers: [StudentsService],
-  exports: [StudentsService],
+  providers: [StudentService],
+  exports: [StudentService],
 })
 export class StudentsModule {}

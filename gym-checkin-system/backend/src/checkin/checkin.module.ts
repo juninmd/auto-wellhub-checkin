@@ -2,16 +2,17 @@ import { Module } from "@nestjs/common";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { join } from "path";
 import { CheckinController } from "./controllers/checkin.controller";
-import { CheckinService } from "./services/checkin.service";
+import { ProcessCheckinService } from "./services/process-checkin.service";
 import { ICheckinRepository } from "./interfaces/checkin-repository.interface";
 import { IHardwareService } from "../infrastructure/hardware/hardware.interface";
-import { HARDWARE_PROVIDER } from "../infrastructure/hardware/hardware.provider.interface";
 import { AbstractLoggerService } from "../infrastructure/logger/logger.contract";
 import { StudentsModule } from "../students/students.module";
+import { HardwareModule } from "../hardware/hardware.module";
 
 @Module({
   imports: [
     StudentsModule,
+    HardwareModule,
     ClientsModule.register([
       {
         name: "BIOMETRICS_PACKAGE",
@@ -26,7 +27,7 @@ import { StudentsModule } from "../students/students.module";
   ],
   controllers: [CheckinController],
   providers: [
-    CheckinService,
+    ProcessCheckinService,
     {
       provide: "BiometricsGrpcService",
       useValue: {
@@ -34,18 +35,6 @@ import { StudentsModule } from "../students/students.module";
           success: true,
           userId: "simulated-user",
         }),
-      },
-    },
-    {
-      provide: IHardwareService,
-      useValue: {
-        openTurnstile: async () => true,
-      },
-    },
-    {
-      provide: HARDWARE_PROVIDER,
-      useValue: {
-        openTurnstile: async (studentId: string) => true,
       },
     },
     {
