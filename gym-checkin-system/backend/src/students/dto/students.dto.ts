@@ -13,3 +13,10 @@ export class RegisterStudentDto {
   @IsOptional()
   biometric_base64?: string;
 }
+
+export class StudentResponseDto {
+  id: string;
+  name: string;
+  isActive: boolean;
+  planId: string;
+}
