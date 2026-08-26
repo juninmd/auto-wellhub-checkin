@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { CreateStudentDto } from "../dto/create-student.dto";
+import { StudentResponseDto } from "../dto/students.dto";
 
 export interface StudentStatus {
   isActive: boolean;
@@ -19,5 +21,16 @@ export class StudentService {
     planId: string,
   ): Promise<boolean> {
     return true;
+  }
+
+  async registerStudent(dto: CreateStudentDto): Promise<StudentResponseDto> {
+    // In a real application, this would save to the database.
+    // Here we just return a mocked success response respecting the DTO.
+    return {
+      id: "mocked-uuid-1234",
+      name: dto.name,
+      isActive: true,
+      planId: dto.planId,
+    };
   }
 }
