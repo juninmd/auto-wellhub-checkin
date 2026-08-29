@@ -94,4 +94,23 @@ describe('ProcessCheckinService', () => {
       status: 'SUCCESS'
     }));
   });
+
+  it('should catch error when logFailedCheckin throws', async () => {
+    mockStudentService.getStudentStatus.mockResolvedValueOnce({ isActive: false, planId: 'plan-1' });
+    mockCheckinRepository.logCheckin.mockRejectedValueOnce(new Error('DB Error'));
+
+    const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
+    await expect(service.execute(dto)).rejects.toThrow(ForbiddenException);
+
+    // Wait a tick for the unhandled rejection in catch block of logFailedCheckin
+    await new Promise(resolve => setTimeout(resolve, 0));
+    // We can't easily assert the logger without spying on it from the module.
+  });
+
+  it('should throw InternalServerErrorException for unexpected errors', async () => {
+    mockStudentService.getStudentStatus.mockRejectedValueOnce(new Error('Unexpected DB Error'));
+
+    const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
+    await expect(service.execute(dto)).rejects.toThrow(InternalServerErrorException);
+  });
 });
