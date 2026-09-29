@@ -8,6 +8,7 @@ import { IHardwareService } from "../infrastructure/hardware/hardware.interface"
 import { AbstractLoggerService } from "../infrastructure/logger/logger.contract";
 import { StudentsModule } from "../students/students.module";
 import { HardwareModule } from "../hardware/hardware.module";
+import { BiometricsClientService } from "../infrastructure/grpc/biometrics.client";
 
 @Module({
   imports: [
@@ -30,12 +31,7 @@ import { HardwareModule } from "../hardware/hardware.module";
     ProcessCheckinService,
     {
       provide: "BiometricsGrpcService",
-      useValue: {
-        validateBiometrics: async () => ({
-          success: true,
-          userId: "simulated-user",
-        }),
-      },
+      useClass: BiometricsClientService,
     },
     {
       provide: ICheckinRepository,
