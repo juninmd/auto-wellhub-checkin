@@ -21,3 +21,6 @@ A implementação atual constitui um scaffolding inicial para o MVP do sistema d
 
 6. **Validação de Inputs:**
    - A validação de DTOs utiliza `class-validator`, mas o `ValidationPipe` global precisa ser ativado no `main.ts` para que essas regras sejam efetivas nos controllers durante tempo de execução.
+
+5. **Frontend Totem (Flutter):**
+   - O frontend em Flutter não está incluído neste repositório. O MVP contempla a estruturação e a lógica do backend.
