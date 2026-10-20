@@ -81,3 +81,16 @@ These guidelines outline the principles and rules for development of AI coding a
 
 These guidelines are intended to serve as a framework for development.  They are subject to change as the project evolves.  Developers are expected to consistently apply these principles throughout the lifetime of the project.
 ```
+**12. Contexto de Domínio: Integração Wellhub (Access Control API)**
+
+*   **Cenário:** o sistema é para a **academia (parceira Wellhub)** validar check-ins de alunos. Não é para o aluno automatizar o próprio check-in (sem API pública e provavelmente contra os termos).
+*   **Fluxo:** o aluno faz check-in no app Wellhub → aciona o acesso (catraca, digital, totem, recepção) → nosso sistema chama a Access Control API → se houver check-in ativo (validade de ~20 min), libera a catraca.
+*   **Endpoint de validação:** `POST https://api.partners.gympass.com/access/v1/validate`
+*   **Sandbox:** `https://apitesting.partners.gympass.com/access/v1`
+*   **Headers:** `Authorization: Bearer <token>` e `X-Gym-Id`.
+*   **Body:** `gympass_id` (13 dígitos, obrigatório) e `custom_code` (opcional). Sem check-in ativo, a validação é negada.
+*   **Pré-requisitos:** cadastro de parceiro no Partner Portal (token e Gym ID), acesso ao sandbox e o `gympass_id` de cada aluno cadastrado.
+*   **Não confirmado:** schema de resposta, códigos de erro e webhooks (documentação exige login de parceiro). Até confirmar, tratar 2xx como aprovado e o restante como negado, e manter o tipo da resposta aberto.
+*   **Arquitetura:** criar um `WellhubAccessClient` atrás de uma interface em `gym-checkin-system`, no mesmo padrão de `biometrics` e `hardware`.
+*   **Código legado:** o `src/` da raiz usa endpoints fictícios (`api.wellhub.com`, login com email e senha) e não deve ser usado como referência.
+*   **Fontes:** https://developers.wellhub.com/product/access-control-api/1.0/endpoints e https://developers.wellhub.com/product/access-control-api/1.0/faq
