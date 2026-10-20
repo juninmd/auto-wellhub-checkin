@@ -4,6 +4,7 @@ import { UnauthorizedException, ForbiddenException, InternalServerErrorException
 import { IHardwareService } from '../../infrastructure/hardware/hardware.interface';
 import { ICheckinRepository } from '../interfaces/checkin-repository.interface';
 import { CheckinRequestDto } from '../dto/checkin.dto';
+import { IWellhubAccessService } from '../../infrastructure/wellhub/wellhub-access.contract';
 import { StudentService } from '../../students/services/student.service';
 
 describe('ProcessCheckinService', () => {
@@ -12,6 +13,7 @@ describe('ProcessCheckinService', () => {
   let mockStudentService: any;
   let mockHardwareService: any;
   let mockCheckinRepository: any;
+  let mockWellhubService: any;
 
   beforeEach(async () => {
     mockBiometricsService = {
@@ -28,6 +30,10 @@ describe('ProcessCheckinService', () => {
       logCheckin: jest.fn().mockResolvedValue({}),
     };
 
+    mockWellhubService = {
+      validate: jest.fn().mockResolvedValue({ approved: true, httpStatus: 200 }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProcessCheckinService,
@@ -35,6 +41,7 @@ describe('ProcessCheckinService', () => {
         { provide: StudentService, useValue: mockStudentService },
         { provide: IHardwareService, useValue: mockHardwareService },
         { provide: ICheckinRepository, useValue: mockCheckinRepository },
+        { provide: IWellhubAccessService, useValue: mockWellhubService },
         {
           provide: 'LoggerService',
           useValue: { log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
@@ -112,5 +119,43 @@ describe('ProcessCheckinService', () => {
 
     const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
     await expect(service.execute(dto)).rejects.toThrow(InternalServerErrorException);
+  });
+
+  describe('Wellhub', () => {
+    const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
+    const wellhubStudent = { isActive: true, planId: 'plan-1', gympassId: '1234567890123' };
+
+    it('should not call Wellhub for students without gympassId', async () => {
+      await service.execute(dto);
+      expect(mockWellhubService.validate).not.toHaveBeenCalled();
+    });
+
+    it('should open the turnstile when Wellhub approves the check-in', async () => {
+      mockStudentService.getStudentStatus.mockResolvedValueOnce(wellhubStudent);
+
+      await expect(service.execute(dto)).resolves.toEqual({ message: 'Acesso Liberado', userId: 'user-1' });
+      expect(mockWellhubService.validate).toHaveBeenCalledWith('1234567890123');
+      expect(mockHardwareService.openTurnstile).toHaveBeenCalled();
+    });
+
+    it('should deny access and keep the turnstile closed when Wellhub denies', async () => {
+      mockStudentService.getStudentStatus.mockResolvedValueOnce(wellhubStudent);
+      mockWellhubService.validate.mockResolvedValueOnce({ approved: false, httpStatus: 404 });
+
+      await expect(service.execute(dto)).rejects.toThrow(ForbiddenException);
+      expect(mockHardwareService.openTurnstile).not.toHaveBeenCalled();
+      expect(mockCheckinRepository.logCheckin).toHaveBeenCalledWith(expect.objectContaining({
+        status: 'FAILED',
+        reason: 'Check-in Wellhub não encontrado ou expirado',
+      }));
+    });
+
+    it('should fail closed when the Wellhub API is unavailable', async () => {
+      mockStudentService.getStudentStatus.mockResolvedValueOnce(wellhubStudent);
+      mockWellhubService.validate.mockRejectedValueOnce(new Error('Wellhub Access Control API respondeu 503'));
+
+      await expect(service.execute(dto)).rejects.toThrow(InternalServerErrorException);
+      expect(mockHardwareService.openTurnstile).not.toHaveBeenCalled();
+    });
   });
 });

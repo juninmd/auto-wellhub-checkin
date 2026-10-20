@@ -90,7 +90,7 @@ These guidelines are intended to serve as a framework for development.  They are
 *   **Headers:** `Authorization: Bearer <token>` e `X-Gym-Id`.
 *   **Body:** `gympass_id` (13 dígitos, obrigatório) e `custom_code` (opcional). Sem check-in ativo, a validação é negada.
 *   **Pré-requisitos:** cadastro de parceiro no Partner Portal (token e Gym ID), acesso ao sandbox e o `gympass_id` de cada aluno cadastrado.
-*   **Não confirmado:** schema de resposta, códigos de erro e webhooks (documentação exige login de parceiro). Até confirmar, tratar 2xx como aprovado e o restante como negado, e manter o tipo da resposta aberto.
-*   **Arquitetura:** criar um `WellhubAccessClient` atrás de uma interface em `gym-checkin-system`, no mesmo padrão de `biometrics` e `hardware`.
-*   **Código legado:** o `src/` da raiz usa endpoints fictícios (`api.wellhub.com`, login com email e senha) e não deve ser usado como referência.
+*   **Não confirmado:** schema de resposta, códigos de erro e webhooks (documentação exige login de parceiro). Até confirmar: 2xx = aprovado; 401/403/5xx/rede/timeout = erro (acesso falha fechado); demais 4xx = negado. Manter o tipo da resposta aberto.
+*   **Arquitetura (implementado):** `WellhubAccessClient` em `gym-checkin-system/backend/src/infrastructure/wellhub/`, atrás de `IWellhubAccessService`, chamado por `ProcessCheckinService` só para alunos com `gympassId`.
+*   **Código legado:** o antigo `src/` da raiz (endpoints fictícios, login com email e senha) foi removido.
 *   **Fontes:** https://developers.wellhub.com/product/access-control-api/1.0/endpoints e https://developers.wellhub.com/product/access-control-api/1.0/faq
