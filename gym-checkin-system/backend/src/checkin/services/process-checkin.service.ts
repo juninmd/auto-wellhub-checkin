@@ -6,6 +6,7 @@ import { CheckinRequestDto } from '../dto/checkin.dto';
 import { ICheckinRepository } from '../interfaces/checkin-repository.interface';
 import { IHardwareService } from '../../infrastructure/hardware/hardware.interface';
 import { StudentService } from '../../students/services/student.service';
+import { IWellhubAccessService } from '../../infrastructure/wellhub/wellhub-access.contract';
 import { AbstractLoggerService } from '../../infrastructure/logger/logger.contract';
 
 @Injectable()
@@ -18,6 +19,8 @@ export class ProcessCheckinService {
     private readonly hardwareService: IHardwareService,
     @Inject(ICheckinRepository)
     private readonly checkinRepository: ICheckinRepository,
+    @Inject(IWellhubAccessService)
+    private readonly wellhubService: IWellhubAccessService,
     @Inject('LoggerService')
     private readonly logger: AbstractLoggerService,
   ) {}
@@ -52,13 +55,18 @@ export class ProcessCheckinService {
         throw new ForbiddenException('Acesso Negado: Horário não permitido para este plano.');
       }
 
-      // 3. Liberação Física
+      // 3. Check-in Wellhub (somente alunos vinculados ao Wellhub)
+      if (studentStatus.gympassId) {
+        await this.assertWellhubCheckin(userId, studentStatus.gympassId);
+      }
+
+      // 4. Liberação Física
       const isTurnstileOpened = await this.hardwareService.openTurnstile();
       if (!isTurnstileOpened) {
         throw new InternalServerErrorException('Falha de comunicação com a catraca.');
       }
 
-      // 4. Registro de Histórico
+      // 5. Registro de Histórico
       await this.checkinRepository.logCheckin({
         studentId: userId,
         timestamp: new Date(),
@@ -78,6 +86,14 @@ export class ProcessCheckinService {
       }
       this.logger.error(`Erro interno: ${userId}`, error.stack, 'ProcessCheckinService');
       throw new InternalServerErrorException('Erro ao processar check-in.');
+    }
+  }
+
+  private async assertWellhubCheckin(userId: string, gympassId: string): Promise<void> {
+    const { approved } = await this.wellhubService.validate(gympassId);
+    if (!approved) {
+      await this.logFailedCheckin(userId, 'Check-in Wellhub não encontrado ou expirado');
+      throw new ForbiddenException('Acesso Negado: faça o check-in no app Wellhub.');
     }
   }
 

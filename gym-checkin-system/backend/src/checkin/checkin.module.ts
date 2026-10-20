@@ -8,12 +8,14 @@ import { IHardwareService } from "../infrastructure/hardware/hardware.interface"
 import { AbstractLoggerService } from "../infrastructure/logger/logger.contract";
 import { StudentsModule } from "../students/students.module";
 import { HardwareModule } from "../hardware/hardware.module";
+import { WellhubModule } from "../wellhub/wellhub.module";
 import { BiometricsClientService } from "../infrastructure/grpc/biometrics.client";
 
 @Module({
   imports: [
     StudentsModule,
     HardwareModule,
+    WellhubModule,
     ClientsModule.register([
       {
         name: "BIOMETRICS_PACKAGE",

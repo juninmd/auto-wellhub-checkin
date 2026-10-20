@@ -81,3 +81,16 @@ These guidelines outline the principles and rules for development of AI coding a
 
 These guidelines are intended to serve as a framework for development.  They are subject to change as the project evolves.  Developers are expected to consistently apply these principles throughout the lifetime of the project.
 ```
+**12. Contexto de Domínio: Integração Wellhub (Access Control API)**
+
+*   **Cenário:** o sistema é para a **academia (parceira Wellhub)** validar check-ins de alunos. Não é para o aluno automatizar o próprio check-in (sem API pública e provavelmente contra os termos).
+*   **Fluxo:** o aluno faz check-in no app Wellhub → aciona o acesso (catraca, digital, totem, recepção) → nosso sistema chama a Access Control API → se houver check-in ativo (validade de ~20 min), libera a catraca.
+*   **Endpoint de validação:** `POST https://api.partners.gympass.com/access/v1/validate`
+*   **Sandbox:** `https://apitesting.partners.gympass.com/access/v1`
+*   **Headers:** `Authorization: Bearer <token>` e `X-Gym-Id`.
+*   **Body:** `gympass_id` (13 dígitos, obrigatório) e `custom_code` (opcional). Sem check-in ativo, a validação é negada.
+*   **Pré-requisitos:** cadastro de parceiro no Partner Portal (token e Gym ID), acesso ao sandbox e o `gympass_id` de cada aluno cadastrado.
+*   **Não confirmado:** schema de resposta, códigos de erro e webhooks (documentação exige login de parceiro). Até confirmar: 2xx = aprovado; 401/403/5xx/rede/timeout = erro (acesso falha fechado); demais 4xx = negado. Manter o tipo da resposta aberto.
+*   **Arquitetura (implementado):** `WellhubAccessClient` em `gym-checkin-system/backend/src/infrastructure/wellhub/`, atrás de `IWellhubAccessService`, chamado por `ProcessCheckinService` só para alunos com `gympassId`.
+*   **Código legado:** o antigo `src/` da raiz (endpoints fictícios, login com email e senha) foi removido.
+*   **Fontes:** https://developers.wellhub.com/product/access-control-api/1.0/endpoints e https://developers.wellhub.com/product/access-control-api/1.0/faq

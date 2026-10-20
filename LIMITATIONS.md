@@ -17,3 +17,9 @@ A atual implementação do sistema baseia-se em um MVP (Produto Mínimo Viável)
 4. **Tratamento Específico LGPD (Armazenamento):**
    - Embora o contrato estabeleça a transição de vetores (hashes), os bancos de dados não estão configurados.
    - **Próximos Passos:** Adicionar criptografia robusta (ex: chaves KMS) e/ou um banco de dados vetorial para assegurar anonimidade total de hashes biométricos no armazenamento.
+
+5. **Integração Wellhub (Access Control API):**
+   - O cliente está implementado, mas o schema de resposta, os códigos de erro e os webhooks não foram confirmados (documentação exige login de parceiro). Hoje: 2xx = aprovado; 401/403/5xx/rede = erro (falha fechado); demais 4xx = negado.
+   - O `gympassId` do aluno é guardado apenas em memória (ver item 1).
+   - Não testado contra o sandbox real: exige token e Gym ID do Partner Portal.
+   - **Próximos Passos:** validar contra o sandbox, ajustar o tratamento de erros ao schema real e persistir o `gympassId`.
