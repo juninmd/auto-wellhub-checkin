@@ -4,6 +4,7 @@
   "description": "Validação de check-ins Wellhub para academias parceiras",
   "private": true,
   "scripts": {
+    "postinstall": "npm --prefix gym-checkin-system/backend install",
     "install:backend": "npm --prefix gym-checkin-system/backend install",
     "build": "npm --prefix gym-checkin-system/backend run build",
     "test": "npm --prefix gym-checkin-system/backend test",
