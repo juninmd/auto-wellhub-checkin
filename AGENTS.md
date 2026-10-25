@@ -94,3 +94,15 @@ These guidelines are intended to serve as a framework for development.  They are
 *   **Arquitetura (implementado):** `WellhubAccessClient` em `gym-checkin-system/backend/src/infrastructure/wellhub/`, atrás de `IWellhubAccessService`, chamado por `ProcessCheckinService` só para alunos com `gympassId`.
 *   **Código legado:** o antigo `src/` da raiz (endpoints fictícios, login com email e senha) foi removido.
 *   **Fontes:** https://developers.wellhub.com/product/access-control-api/1.0/endpoints e https://developers.wellhub.com/product/access-control-api/1.0/faq
+
+<!-- base-actions-main-policy -->
+## GitHub Actions — padrão obrigatório (@main)
+
+- Referencie as actions internas sempre pelo branch, nunca por SHA:
+  - `uses: juninmd/base-actions/<action>@main`
+  - `uses: juninmd/base-actions/.github/workflows/<arquivo>.yml@main`
+- Não fixe `@<sha>` em `juninmd/base-actions`: a atualização é centralizada no
+  `main` e passa a valer no próximo run.
+- PRs cujos checks não iniciam por billing/spending limit são mesclados pelo bot central
+  `juninmd/base-actions/.github/workflows/auto-merge-billing-blocked.yml`.
+  Para impedir o merge automático de um PR, aplique a label `do-not-merge`.
