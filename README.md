@@ -1,5 +1,9 @@
 # Wellhub Check-in para Academias
 
+<p align="center">
+  <img src="docs/readme/hero.png" alt="Banner ilustrativo do Wellhub Check-in (mockup com dados fictícios)" width="100%">
+</p>
+
 Backend em NestJS que valida o check-in feito no app Wellhub e só libera a catraca quando o plano do aluno está ativo, o horário é permitido e a Access Control API confirma que existe um check-in válido. Se qualquer elo falhar, a catraca continua fechada.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -204,6 +208,24 @@ Workflows:
 | `security.yml` | Scan de segurança pelo workflow compartilhado, em pushes |
 | `release-drafter.yml` | Notas de release |
 | `dependabot-auto-merge.yml` | Auto-merge de PRs do Dependabot quando todos os checks passam |
+
+## Imagens
+
+> [!NOTE]
+> **Mockups ilustrativos.** As telas abaixo foram geradas em HTML com dados fictícios (Playwright) e não são capturas de uma instalação real.
+
+<p align="center">
+  <img src="docs/readme/gate.png" alt="Status da catraca — mockup ilustrativo com dados fictícios" width="100%">
+  <br>
+  <sub>Status da catraca — dados fictícios.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/readme/flow.png" alt="Fluxo fail-closed — mockup ilustrativo com dados fictícios" width="100%">
+  <br>
+  <sub>Fluxo fail-closed — dados fictícios.</sub>
+</p>
+
 
 ## Limitações
 
