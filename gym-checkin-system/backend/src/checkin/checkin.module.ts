@@ -5,7 +5,7 @@ import { CheckinController } from "./controllers/checkin.controller";
 import { ProcessCheckinService } from "./services/process-checkin.service";
 import { ICheckinRepository } from "./interfaces/checkin-repository.interface";
 import { IHardwareService } from "../infrastructure/hardware/hardware.interface";
-import { AbstractLoggerService } from "../infrastructure/logger/logger.contract";
+import { NestLoggerService } from "../infrastructure/logger/nest-logger.service";
 import { StudentsModule } from "../students/students.module";
 import { HardwareModule } from "../hardware/hardware.module";
 import { WellhubModule } from "../wellhub/wellhub.module";
@@ -43,12 +43,7 @@ import { BiometricsClientService } from "../infrastructure/grpc/biometrics.clien
     },
     {
       provide: "LoggerService",
-      useValue: {
-        log: () => {},
-        error: () => {},
-        warn: () => {},
-        debug: () => {},
-      },
+      useClass: NestLoggerService,
     },
   ],
 })
