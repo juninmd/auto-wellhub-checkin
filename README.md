@@ -42,7 +42,7 @@ A distinção entre “negado” e “erro” é intencional: uma credencial inv
 
 ## API
 
-O servidor sobe em `http://localhost:3000` (porta fixa em `src/main.ts`) e usa `ValidationPipe` global com `whitelist: true` e `transform: true`.
+O servidor sobe em `http://localhost:3000` (porta 3000 por padrão; mude com a variável `PORT`, validada em `src/config/port.ts`) e usa `ValidationPipe` global com `whitelist: true` e `transform: true`.
 
 ### `POST /students`
 
@@ -165,7 +165,7 @@ sequenceDiagram
 
 | Caminho | Papel |
 |---|---|
-| `src/main.ts` | Bootstrap Nest, `ValidationPipe`, porta 3000 |
+| `src/main.ts` | Bootstrap Nest, `ValidationPipe`, porta (`PORT`, padrão 3000) |
 | `src/app.module.ts` | `ConfigModule` global, logger no-op, módulos de check-in e alunos |
 | `src/checkin/` | Controller `POST /checkin`, DTO, serviço de orquestração e interface de repositório |
 | `src/students/` | Controller `POST /students`, DTOs e serviço de cadastro/status |
