@@ -1,7 +1,10 @@
 import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, timeout } from 'rxjs';
 import { BiometricsGrpcService, BiometricMatchRequest, BiometricMatchResponse } from './biometrics.contract';
+
+/** A hung biometric service must not hold the turnstile request open forever. */
+export const IDENTIFY_TIMEOUT_MS = 5000;
 
 interface IdentifyRequest {
   biometricBase64: string; // The @grpc/proto-loader automatically maps snake_case to camelCase
@@ -34,7 +37,9 @@ export class BiometricsClientService implements OnModuleInit, BiometricsGrpcServ
     };
 
     try {
-      const response = await firstValueFrom(this.biometricService.identify(identifyRequest));
+      const response = await firstValueFrom(
+        this.biometricService.identify(identifyRequest).pipe(timeout(IDENTIFY_TIMEOUT_MS)),
+      );
 
       return {
         success: response.success,

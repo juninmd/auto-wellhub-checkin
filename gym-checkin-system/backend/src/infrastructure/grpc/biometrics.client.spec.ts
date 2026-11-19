@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BiometricsClientService } from './biometrics.client';
-import { of, throwError } from 'rxjs';
+import { BiometricsClientService, IDENTIFY_TIMEOUT_MS } from './biometrics.client';
+import { NEVER, of, throwError } from 'rxjs';
 
 describe('BiometricsClientService', () => {
   let service: BiometricsClientService;
@@ -93,6 +93,23 @@ describe('BiometricsClientService', () => {
         success: false,
         message: 'Error communicating with biometric service',
       });
+    });
+
+    it('should fail instead of hanging when the biometric service never answers', async () => {
+      jest.useFakeTimers();
+      try {
+        mockBiometricServiceGrpc.identify.mockReturnValue(NEVER);
+
+        const pending = service.validateBiometrics({ biometricData: 'base64-data', type: 'FACE' });
+        await jest.advanceTimersByTimeAsync(IDENTIFY_TIMEOUT_MS + 1);
+
+        await expect(pending).resolves.toEqual({
+          success: false,
+          message: expect.stringContaining('Timeout'),
+        });
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 });
