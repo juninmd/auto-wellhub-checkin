@@ -92,6 +92,16 @@ describe('ProcessCheckinService', () => {
     await expect(service.execute(dto)).rejects.toThrow(InternalServerErrorException);
   });
 
+  it('should tell the student the turnstile failed and record the denied check-in', async () => {
+    mockHardwareService.openTurnstile.mockResolvedValueOnce(false);
+
+    const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
+    await expect(service.execute(dto)).rejects.toThrow('Falha de comunicação com a catraca.');
+    expect(mockCheckinRepository.logCheckin).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'FAILED', reason: 'Falha de comunicação com a catraca' }),
+    );
+  });
+
   it('should return successfully when all checks pass', async () => {
     const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
     const result = await service.execute(dto);

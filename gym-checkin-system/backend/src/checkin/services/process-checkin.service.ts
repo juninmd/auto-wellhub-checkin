@@ -1,6 +1,6 @@
 // src/checkin/services/process-checkin.service.ts
 
-import { Injectable, Inject, UnauthorizedException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, ForbiddenException, InternalServerErrorException, HttpException } from '@nestjs/common';
 import { BiometricsGrpcService } from '../../infrastructure/grpc/biometrics.contract';
 import { CheckinRequestDto } from '../dto/checkin.dto';
 import { ICheckinRepository } from '../interfaces/checkin-repository.interface';
@@ -63,6 +63,7 @@ export class ProcessCheckinService {
       // 4. Liberação Física
       const isTurnstileOpened = await this.hardwareService.openTurnstile();
       if (!isTurnstileOpened) {
+        await this.logFailedCheckin(userId, 'Falha de comunicação com a catraca');
         throw new InternalServerErrorException('Falha de comunicação com a catraca.');
       }
 
@@ -81,7 +82,8 @@ export class ProcessCheckinService {
       };
 
     } catch (error) {
-      if (error instanceof UnauthorizedException || error instanceof ForbiddenException) {
+      // Already a deliberate answer (denied, turnstile down): keep its message for the student.
+      if (error instanceof HttpException) {
         throw error;
       }
       this.logger.error(`Erro interno: ${userId}`, error.stack, 'ProcessCheckinService');
