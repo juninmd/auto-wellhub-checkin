@@ -67,12 +67,12 @@ export class ProcessCheckinService {
         throw new InternalServerErrorException('Falha de comunicação com a catraca.');
       }
 
-      // 5. Registro de Histórico
+      // 5. Registro de Histórico — a catraca já abriu: falhar aqui faria o aluno tentar de novo e passar duas vezes.
       await this.checkinRepository.logCheckin({
         studentId: userId,
         timestamp: new Date(),
         status: 'SUCCESS',
-      });
+      }).catch(e => this.logger.error(`Check-in liberado sem registro no histórico: ${userId}`, e.stack, 'ProcessCheckinService'));
 
       this.logger.log(`Check-in liberado: ${userId}`, 'ProcessCheckinService');
 
