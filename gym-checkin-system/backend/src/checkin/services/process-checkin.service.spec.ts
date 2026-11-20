@@ -112,6 +112,14 @@ describe('ProcessCheckinService', () => {
     }));
   });
 
+  it('should still report access when the turnstile opened but the history write failed', async () => {
+    mockCheckinRepository.logCheckin.mockRejectedValueOnce(new Error('DB Error'));
+
+    const dto: CheckinRequestDto = { biometricData: 'data', type: 'FACE' };
+    await expect(service.execute(dto)).resolves.toEqual({ message: 'Acesso Liberado', userId: 'user-1' });
+    expect(mockHardwareService.openTurnstile).toHaveBeenCalledTimes(1);
+  });
+
   it('should catch error when logFailedCheckin throws', async () => {
     mockStudentService.getStudentStatus.mockResolvedValueOnce({ isActive: false, planId: 'plan-1' });
     mockCheckinRepository.logCheckin.mockRejectedValueOnce(new Error('DB Error'));
