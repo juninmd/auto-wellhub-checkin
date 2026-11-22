@@ -1,99 +1,60 @@
-```markdown
-# AGENTS.md - AI Coding Agent Guidelines
+# AGENTS.md
 
-These guidelines outline the principles and rules for development of AI coding agents within this repository.  Adherence to these principles is crucial for maintaining code quality, testability, and maintainability.
+Gym check-in validation for a Wellhub partner gym. The NestJS backend in `gym-checkin-system/` checks a student's active Wellhub check-in and opens the turnstile. It is not a tool for students to check themselves in.
 
-**1. DRY (Don't Repeat Yourself)**
+## Stack
 
-*   All functions, classes, and modules should have a single, clearly defined purpose.
-*   Avoid duplication of logic and code across different parts of the codebase.
-*   Refactor whenever a function or class performs a similar task; create a new function/class to encapsulate the logic.
-*   Use inheritance or composition judiciously, favoring single responsibility principles.
+- NestJS backend (`gym-checkin-system/backend`), TypeScript, Jest, ESLint, Prettier
+- gRPC contract for biometrics (`proto/biometrics.proto`)
+- Wellhub Access Control API (see Domain below)
 
-**2. KISS (Keep It Simple, Stupid)**
+## Commands
 
-*   Prioritize readability and clarity over complex or convoluted solutions.
-*   Use the simplest possible solution that addresses the problem.
-*   Avoid unnecessary abstractions or complexities that don't add value.
-*   Keep methods and functions short and focused on a single task.
+- Root (delegates to the backend): `npm install` (postinstall installs the backend), `npm run build`, `npm test`, `npm run dev`, `npm start`
+- Backend: `npm --prefix gym-checkin-system/backend run build | test | lint | format`
+- Dev server with watch: `npm --prefix gym-checkin-system/backend run start:dev`
+- Production start: `npm --prefix gym-checkin-system/backend run start:prod` (runs `dist/main`)
 
-**3. SOLID Principles**
+## Structure
 
-*   **Single Responsibility Principle:** Each class/module should have one, and only one, reason to change.
-*   **Open/Closed Principle:**  The system should be extensible through mechanisms like interfaces and abstract classes, without modifying the existing code.
-*   **Liskov Substitution Principle:**  Subclasses must be substitutable for their base classes without altering the correctness of the program.
-*   **Interface Segregation Principle:** Clients should not be forced to implement interfaces they do not use.
-*   **Dependency Inversion Principle:**  High-level modules should not depend on low-level modules; they should depend on abstractions.
+- `gym-checkin-system/backend/src/checkin/` — check-in controller, DTOs, `ProcessCheckinService`
+- `gym-checkin-system/backend/src/students/` — student controller, DTOs, service
+- `gym-checkin-system/backend/src/wellhub/` — Wellhub module
+- `gym-checkin-system/backend/src/infrastructure/wellhub/` — `WellhubAccessClient` behind `IWellhubAccessService`
+- `gym-checkin-system/backend/src/infrastructure/grpc/` — biometrics client
+- `gym-checkin-system/backend/src/infrastructure/logger/` — logger contract and Nest logger
+- `gym-checkin-system/backend/src/hardware/` — turnstile hardware service
+- Top-level `README.md`, `SOLUTION.md`, `RESPONSE.md`, `LIMITATIONS.md`, `docs/`
 
-**4. YAGNI (You Aren't Gonna Need It)**
+## Conventions
 
-*   Implement only the functionalities required for the current task and subsequent needs.
-*   Avoid adding features or logic that are not currently necessary.
-*   Refactor and simplify existing code to eliminate unnecessary complexity.
+- Principles: DRY, KISS, SOLID, YAGNI. One clear purpose per module; prefer composition; implement only what the task needs.
+- Max 180 lines per file.
+- Every code change needs unit tests covering critical logic and edge cases. Target coverage is 85%; `jest.config.js` does not enforce it.
+- Lint and static analysis (ESLint) before a PR. Document functions, classes and modules.
+- Robust error handling and logging that give useful feedback.
+- Git with feature branches and releases.
+- Every code change needs review from at least two developers.
+- Daily regression tests are required to keep existing behavior.
+- Implement appropriate data validation. No secrets or PII in logs.
 
-**5. Development Process**
+## Domain: Wellhub Access Control API
 
-*   **Code Reviews:** All code changes must undergo rigorous code reviews by at least two developers.
-*   **Unit Tests:** All code must be thoroughly tested with comprehensive unit tests.  Tests should cover all critical logic and edge cases.
-*   **Regression Tests:**  Daily regression tests are required to maintain existing functionality.
-*   **Static Analysis:**  Use static analysis tools (e.g., pylint, eslint) to identify potential issues and enforce coding standards.
-*   **Documentation:**  Provide clear and concise documentation for all functions, classes, and modules, adhering to established documentation conventions.
-*   **Error Handling:** Implement robust error handling and logging to provide meaningful feedback and prevent unexpected behavior.
-*   **Version Control:** Use Git with a well-defined branching strategy (e.g., feature branches, releases).
+- Flow: student checks in on the Wellhub app → triggers access (turnstile, fingerprint, kiosk, reception) → our system calls the Access Control API → if an active check-in exists (about 20 minutes valid), the turnstile opens.
+- Validation endpoint: `POST https://api.partners.gympass.com/access/v1/validate`
+- Sandbox: `https://apitesting.partners.gympass.com/access/v1` (default in `.env.example`)
+- Headers: `Authorization: Bearer <token>` and `X-Gym-Id`.
+- Body: `gympass_id` (13 digits, required) and `custom_code` (optional). Without an active check-in the validation is denied.
+- Prerequisites: partner registration on the Partner Portal (token and Gym ID), sandbox access, and each student's `gympass_id`.
+- Not confirmed (partner login required): response schema, error codes, webhooks. Until confirmed: 2xx = approved; 401/403/429/5xx/network/timeout = error (access fails closed); other 4xx = denied. Keep the response type open.
+- Architecture: `WellhubAccessClient` sits behind `IWellhubAccessService` and is called by `ProcessCheckinService` only for students with a `gympassId`.
+- The legacy root `src/` (fictional endpoints, email/password login) was removed. Do not restore it.
+- Sources: https://developers.wellhub.com/product/access-control-api/1.0/endpoints and https://developers.wellhub.com/product/access-control-api/1.0/faq
 
-**6. Code Size Limits**
+## Gotchas
 
-*   Maximum code size: 180 lines.
-*   Code must be easily readable and understandable.
-
-**7. Test Coverage Requirements**
-
-*   Minimum test coverage: 85%
-*   Testing methodology:  Automated tests focusing on critical paths and edge cases.
-*   Test data strategy:  Realistic and diverse test data.
-
-**8. File Structure**
-
-*   Each file must have a single, focused purpose.
-*   File names should be descriptive and follow a consistent naming convention.
-*   Comments should clearly explain complex logic or non-obvious code.
-*   Use appropriate indentation and formatting for readability.
-
-**9. Specific Requirements**
-
-*   All code must adhere to the established coding style guide.
-*   Implement appropriate data validation and error handling mechanisms.
-*   Include logging statements to track events and debugging information.
-*   Consider using appropriate data structures and algorithms for performance optimization.
-*   Provide clear documentation about API usage and expected inputs/outputs.
-
-**10.  AI Agent Considerations**
-
-*   Code must be designed to be easily adaptable for future AI models.
-*   Consider the potential impact of the code on AI training and inference.
-*   Utilize clear and understandable code patterns for AI agent processing.
-
-**11.  Tools**
-
-*   Use [Specific IDE/Editor] for code editing and debugging.
-*   Employ [Specific Testing Framework] for automated testing.
-*   Utilize [Specific Static Analysis Tool] for code quality checks.
-
-These guidelines are intended to serve as a framework for development.  They are subject to change as the project evolves.  Developers are expected to consistently apply these principles throughout the lifetime of the project.
-```
-**12. Contexto de Domínio: Integração Wellhub (Access Control API)**
-
-*   **Cenário:** o sistema é para a **academia (parceira Wellhub)** validar check-ins de alunos. Não é para o aluno automatizar o próprio check-in (sem API pública e provavelmente contra os termos).
-*   **Fluxo:** o aluno faz check-in no app Wellhub → aciona o acesso (catraca, digital, totem, recepção) → nosso sistema chama a Access Control API → se houver check-in ativo (validade de ~20 min), libera a catraca.
-*   **Endpoint de validação:** `POST https://api.partners.gympass.com/access/v1/validate`
-*   **Sandbox:** `https://apitesting.partners.gympass.com/access/v1`
-*   **Headers:** `Authorization: Bearer <token>` e `X-Gym-Id`.
-*   **Body:** `gympass_id` (13 dígitos, obrigatório) e `custom_code` (opcional). Sem check-in ativo, a validação é negada.
-*   **Pré-requisitos:** cadastro de parceiro no Partner Portal (token e Gym ID), acesso ao sandbox e o `gympass_id` de cada aluno cadastrado.
-*   **Não confirmado:** schema de resposta, códigos de erro e webhooks (documentação exige login de parceiro). Até confirmar: 2xx = aprovado; 401/403/429/5xx/rede/timeout = erro (acesso falha fechado); demais 4xx = negado. Manter o tipo da resposta aberto.
-*   **Arquitetura (implementado):** `WellhubAccessClient` em `gym-checkin-system/backend/src/infrastructure/wellhub/`, atrás de `IWellhubAccessService`, chamado por `ProcessCheckinService` só para alunos com `gympassId`.
-*   **Código legado:** o antigo `src/` da raiz (endpoints fictícios, login com email e senha) foi removido.
-*   **Fontes:** https://developers.wellhub.com/product/access-control-api/1.0/endpoints e https://developers.wellhub.com/product/access-control-api/1.0/faq
+- Secrets: `WELLHUB_API_TOKEN` and Gym ID come from env (`gym-checkin-system/backend/.env.example` lists names only). Never commit or log them.
+- Root `.gitignore` ignores `package-lock.json` at the root.
 
 <!-- base-actions-main-policy -->
 ## GitHub Actions — padrão obrigatório (@main)
