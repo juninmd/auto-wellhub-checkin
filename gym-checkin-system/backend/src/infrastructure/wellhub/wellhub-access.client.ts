@@ -4,8 +4,9 @@ import { WELLHUB_CONFIG, WellhubConfig } from "./wellhub.config";
 
 const GYMPASS_ID_PATTERN = /^\d{13}$/;
 
-/** Falhas que não dizem nada sobre o aluno: credenciais, indisponibilidade. */
-const isUnreliableStatus = (status: number) => status === 401 || status === 403 || status >= 500;
+/** Falhas que não dizem nada sobre o aluno: credenciais, limite de taxa, indisponibilidade. */
+const isUnreliableStatus = (status: number) =>
+  status === 401 || status === 403 || status === 429 || status >= 500;
 
 @Injectable()
 export class WellhubAccessClient implements IWellhubAccessService {

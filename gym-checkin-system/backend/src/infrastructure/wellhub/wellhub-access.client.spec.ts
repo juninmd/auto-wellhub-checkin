@@ -51,7 +51,7 @@ describe("WellhubAccessClient", () => {
     await expect(client.validate(gympassId)).resolves.toEqual({ approved: false, httpStatus: status });
   });
 
-  it.each([401, 403, 500, 503])("should throw on unreliable status %i", async (status) => {
+  it.each([401, 403, 429, 500, 503])("should throw on unreliable status %i", async (status) => {
     respondWith(status);
     await expect(client.validate(gympassId)).rejects.toThrow(String(status));
   });
